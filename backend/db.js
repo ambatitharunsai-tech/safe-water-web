@@ -1,43 +1,35 @@
-const mongoose = require('mongoose');
+const Database = require('better-sqlite3');
+const path = require('path');
 
-const connectDB = async () => {
-  try {
-    // If no URI is provided, we default to localhost for local testing
-    const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/safe-water';
-    await mongoose.connect(uri);
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  }
-};
+const dbPath = path.join(__dirname, 'database.sqlite');
+const db = new Database(dbPath);
 
-// Define Schemas
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
+// Initialize tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 
-const userSettingsSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-  family_size: { type: Number, default: 4 },
-  water_can_cost: { type: Number, default: 80 },
-  hydration_goal: { type: Number, default: 8 }
-});
+  CREATE TABLE IF NOT EXISTS alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    location TEXT NOT NULL,
+    type TEXT NOT NULL,
+    author TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 
-const alertSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  location: { type: String, required: true },
-  type: { type: String, required: true }, // danger, warning, info
-  author: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
+  CREATE TABLE IF NOT EXISTS user_settings (
+    user_id INTEGER PRIMARY KEY,
+    family_size INTEGER DEFAULT 4,
+    water_can_cost INTEGER DEFAULT 80,
+    hydration_goal INTEGER DEFAULT 8,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  );
+`);
 
-// Create Models
-const User = mongoose.model('User', userSchema);
-const UserSettings = mongoose.model('UserSettings', userSettingsSchema);
-const Alert = mongoose.model('Alert', alertSchema);
-
-module.exports = { connectDB, User, UserSettings, Alert };
+module.exports = db;
