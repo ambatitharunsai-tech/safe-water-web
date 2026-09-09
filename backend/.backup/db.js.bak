@@ -1,51 +1,35 @@
 const { MongoClient, ObjectId } = require('mongodb');
 
-// ── Connection ───────────────────────────────────────
-
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'safe-water-web';
 
 if (!uri) {
-  console.error('❌ FATAL: MONGODB_URI environment variable is not set.');
-  process.exit(1);
+  throw new Error('MONGODB_URI is not configured');
 }
 
 const client = new MongoClient(uri);
 
 let database = null;
-let connectingPromise = null;
+let connecting = null;
 
 async function connectDB() {
   if (database) return database;
 
-  if (!connectingPromise) {
-    connectingPromise = client.connect()
+  if (!connecting) {
+    connecting = client.connect()
       .then(() => {
         database = client.db(dbName);
-        console.log(`✅ MongoDB connected to database: ${dbName}`);
+        console.log(`✅ MongoDB connected: ${dbName}`);
         return database;
       })
       .catch((error) => {
-        connectingPromise = null;
-        console.error('❌ MongoDB connection failed:', error.message);
+        connecting = null;
         throw error;
       });
   }
 
-  return connectingPromise;
+  return connecting;
 }
-
-async function isConnected() {
-  try {
-    if (!database) return false;
-    await database.command({ ping: 1 });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// ── Index initialization ─────────────────────────────
 
 async function initDB() {
   const db = await connectDB();
@@ -64,13 +48,12 @@ async function initDB() {
     { created_at: -1 }
   );
 
-  console.log('✅ MongoDB indexes initialized');
+  console.log('✅ MongoDB collections and indexes ready');
 }
-
-// ── Users ────────────────────────────────────────────
 
 async function findUserByEmail(email) {
   const db = await connectDB();
+
   return db.collection('users').findOne({
     email: String(email).trim().toLowerCase()
   });
@@ -78,6 +61,7 @@ async function findUserByEmail(email) {
 
 async function findUserById(id) {
   const db = await connectDB();
+
   try {
     return db.collection('users').findOne({
       _id: new ObjectId(id)
@@ -98,9 +82,9 @@ async function createUser(name, email, hashedPassword) {
   };
 
   const result = await db.collection('users').insertOne(user);
+
   user._id = result.insertedId;
 
-  // Create default settings
   await db.collection('userSettings').insertOne({
     user_id: user._id,
     family_size: 4,
@@ -111,10 +95,9 @@ async function createUser(name, email, hashedPassword) {
   return user;
 }
 
-// ── Settings ─────────────────────────────────────────
-
 async function getSettings(userId) {
   const db = await connectDB();
+
   const objectId = new ObjectId(userId);
 
   let settings = await db.collection('userSettings').findOne({
@@ -128,36 +111,44 @@ async function getSettings(userId) {
       water_can_cost: 80,
       hydration_goal: 8
     };
+
     await db.collection('userSettings').insertOne(settings);
   }
 
   return settings;
 }
 
-async function updateSettings(userId, familySize, waterCanCost, hydrationGoal) {
+async function updateSettings(
+  userId,
+  familySize,
+  waterCanCost,
+  hydrationGoal
+) {
   const db = await connectDB();
+
   const objectId = new ObjectId(userId);
 
-  const updates = {
+  const settings = {
     family_size: Number(familySize),
     water_can_cost: Number(waterCanCost),
     hydration_goal: Number(hydrationGoal)
   };
 
-  // Validate all values are finite positive numbers
   if (
-    !Number.isFinite(updates.family_size) || updates.family_size < 1 ||
-    !Number.isFinite(updates.water_can_cost) || updates.water_can_cost < 0 ||
-    !Number.isFinite(updates.hydration_goal) || updates.hydration_goal < 1
+    !Number.isFinite(settings.family_size) ||
+    !Number.isFinite(settings.water_can_cost) ||
+    !Number.isFinite(settings.hydration_goal)
   ) {
-    throw new Error('INVALID_SETTINGS');
+    throw new Error('Invalid settings values');
   }
 
   await db.collection('userSettings').updateOne(
     { user_id: objectId },
     {
-      $set: updates,
-      $setOnInsert: { user_id: objectId }
+      $set: settings,
+      $setOnInsert: {
+        user_id: objectId
+      }
     },
     { upsert: true }
   );
@@ -165,10 +156,9 @@ async function updateSettings(userId, familySize, waterCanCost, hydrationGoal) {
   return getSettings(userId);
 }
 
-// ── Alerts ───────────────────────────────────────────
-
 async function getAlerts(limit = 50) {
   const db = await connectDB();
+
   return db.collection('alerts')
     .find({})
     .sort({ created_at: -1 })
@@ -195,12 +185,9 @@ async function createAlert(title, location, type, author) {
   };
 }
 
-// ── Exports ──────────────────────────────────────────
-
 module.exports = {
   connectDB,
   initDB,
-  isConnected,
   findUserByEmail,
   findUserById,
   createUser,
