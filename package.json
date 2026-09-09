@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "render-build": "npm install && npm run build && cd backend && npm install",
+    "render-build": "npm install && npm run build",
     "start": "cd backend && node server.js"
   },
   "dependencies": {
@@ -22,7 +22,13 @@
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3",
     "tailwind-merge": "^3.6.0",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
