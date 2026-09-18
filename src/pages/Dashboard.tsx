@@ -8,9 +8,12 @@ import {
   CalendarDays, AlertTriangle, CheckCircle, Award, Star, Zap, TrendingUp,
   Radio, Stethoscope, MapPin, HeartPulse, Calculator, Coins, Lightbulb,
   FileText, BarChart3, Info, AlertOctagon, ChevronLeft, ChevronRight,
-  MessageSquareOff, Phone, Sparkles, Truck, Flame, Gauge, BellRing
+  MessageSquareOff, Phone, Sparkles, Truck, Flame, Gauge, BellRing, Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WeatherHydrationWidget } from '../components/WeatherHydrationWidget';
+import { AIAssistant } from '../components/AIAssistant';
+
 
 const CHECKLIST_ITEMS = [
   "Store water in clean, covered containers.",
@@ -48,7 +51,7 @@ export function Dashboard() {
   const navigate = useNavigate();
   const { addToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'community' | 'health' | 'calculator' | 'study' | 'directory'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'community' | 'health' | 'calculator' | 'study' | 'directory' | 'assistant'>('personal');
 
   const [hydrationHistory, setHydrationHistory] = useState<Record<string, number>>({});
   const [checklist, setChecklist] = useState<boolean[]>(new Array(CHECKLIST_ITEMS.length).fill(false));
@@ -349,6 +352,8 @@ export function Dashboard() {
 
           <motion.div className="bg-slate-900/60 backdrop-blur-2xl rounded-[2rem] p-4 border border-white/10 shadow-2xl flex flex-col gap-2">
             <NavItem id="personal" icon={Activity} label="My Dashboard" colorClass="bg-brand-500" />
+            <NavItem id="assistant" icon={Bot} label="AI Assistant" colorClass="bg-purple-500" />
+
             <NavItem id="community" icon={Radio} label="Live Community Alerts" colorClass="bg-amber-500" />
             <NavItem id="health" icon={Stethoscope} label="Health Checker" colorClass="bg-rose-500" />
             <NavItem id="calculator" icon={Calculator} label="Cost Calculator" colorClass="bg-emerald-500" />
@@ -398,6 +403,8 @@ export function Dashboard() {
             {/* TAB 1: PERSONAL DASHBOARD */}
             {activeTab === 'personal' && (
               <motion.div key="personal" variants={staggerContainer} initial="hidden" animate="show" exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }} className="flex flex-col gap-6">
+                <WeatherHydrationWidget />
+
                 
                 <motion.div variants={cardVariant} className="grid sm:grid-cols-2 gap-4">
                   <div className="bg-gradient-to-br from-emerald-900/60 to-slate-900/60 backdrop-blur-2xl rounded-[2rem] p-8 border border-emerald-500/30 shadow-2xl relative overflow-hidden group">
@@ -853,6 +860,12 @@ export function Dashboard() {
                 </motion.div>
               </motion.div>
             )}
+            {activeTab === 'assistant' && (
+              <motion.div key="assistant" variants={staggerContainer} initial="hidden" animate="show" exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }} className="flex flex-col gap-6">
+                <AIAssistant />
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </div>
 

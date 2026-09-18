@@ -277,6 +277,45 @@ app.post('/api/alerts', authenticateToken, async (req, res) => {
   }
 });
 
+// ── AI Agent ──────────────────────────────────────────
+
+app.post('/api/ai/chat', authenticateToken, async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'message is required' });
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    return res.json({ 
+      success: true, 
+      reply: "Hi! I'm your offline Safe Water assistant. Please configure the `GEMINI_API_KEY` in your environment variables to enable my full AI capabilities! For now, remember to boil water before drinking and stay hydrated." 
+    });
+  }
+
+  try {
+    // using native fetch which is available in Node 18+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `You are a helpful water safety and hydration assistant named AquaBot. Keep responses brief (1-3 sentences). User: ${message}` }] }]
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble thinking right now. Please try again later.";
+    
+    res.json({ success: true, reply });
+  } catch (err) {
+    console.error('AI chat error:', err.message);
+    res.json({ success: true, reply: "I'm experiencing connectivity issues to my AI brain. Please try again later." });
+  }
+});
+
 // ── Serve frontend (production) ──────────────────────
 
 const buildPath = path.join(__dirname, '../dist');
