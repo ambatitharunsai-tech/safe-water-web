@@ -7,7 +7,8 @@ const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-safe-water';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('JWT_SECRET must be configured; do not use a fallback secret.');
 
 app.use(cors());
 app.use(express.json());
