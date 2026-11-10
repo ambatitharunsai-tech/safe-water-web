@@ -1,196 +1,151 @@
 # Safe Water Web 💧
 
-An interactive web platform designed to promote awareness of safe drinking water, water contamination, hydration tracking, and responsible water management. Built as a cinematic, community-driven environmental awareness campaign.
+A water-safety and hydration awareness web application. The project combines a React frontend with an Express API and MongoDB persistence to provide account-based dashboards and community information.
+
+**Live application:** https://safe-water-web.onrender.com  
+**Repository:** https://github.com/ambatitharunsai-tech/safe-water-web
 
 ## Features
 
-- **🔐 Secure Authentication** — Register/Login with bcrypt password hashing and JWT tokens
-- **💧 Hydration Tracker** — Daily water intake tracking with weekly velocity charts and monthly calendar heatmaps
-- **✅ Safety Checklist** — Interactive daily water safety checklist with progress tracking
-- **📡 Live Community Alerts** — Global real-time water safety alert feed shared across all users
-- **🩺 Health Diagnostic AI** — Symptom-based waterborne illness risk assessment
-- **💰 Cost Calculator** — Family water cost comparison (bottled vs. boiled vs. filtered)
-- **📞 Local Contacts** — Emergency water/health service directory
-- **📊 Survey Data** — Interactive data visualization from local Narasaraopeta water survey
-- **🏆 Gamification** — Achievement badges (Hydration Hero, Safety Inspector, Pristine Storage)
+- **Account access:** registration and login using bcrypt password hashing and signed JWTs.
+- **Hydration dashboard:** tools for tracking daily water intake and reviewing progress.
+- **Water-safety checklist:** interactive reminders for safer water handling and storage.
+- **Community alerts:** authenticated users can view and submit water-safety alerts.
+- **AI assistant:** an optional Gemini-powered chat endpoint; without a Gemini key the API returns a basic offline guidance response.
+- **Settings and profile data:** user-specific dashboard settings stored by the backend.
+- **Awareness content:** educational pages, local contacts and water-awareness information.
 
-## Technology Stack
+Feature availability and stored information depend on the configured backend and database.
+
+## Technology
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, TypeScript 6, Vite 8 |
-| Styling | Tailwind CSS 3, Framer Motion |
-| 3D | Three.js, React Three Fiber |
+|---|---|
+| Frontend | React 19, TypeScript, Vite |
+| UI | Tailwind CSS, Framer Motion, Three.js / React Three Fiber, Lucide |
 | Backend | Node.js, Express 5 |
-| Database | MongoDB Atlas |
-| Auth | bcryptjs, JSON Web Tokens |
-| Icons | Lucide React |
+| Database | MongoDB |
+| Authentication | bcryptjs, JSON Web Tokens |
+| Deployment | Render |
 
 ## Architecture
 
-```
-React + TypeScript Frontend (Vite)
-        │
-        │  REST API (/api/*)
-        ▼
-Express Backend (Node.js)
-        │
-        ├── Authentication
-        │      ├── POST /api/auth/register
-        │      ├── POST /api/auth/login
-        │      ├── GET  /api/auth/me
-        │      ├── bcrypt password hashing
-        │      └── JWT (7-day expiry)
-        │
-        ├── Settings API
-        │      ├── GET  /api/settings
-        │      └── POST /api/settings
-        │
-        ├── Alerts API
-        │      ├── GET  /api/alerts
-        │      └── POST /api/alerts
-        │
-        ├── Health
-        │      └── GET  /api/health
-        │
-        └── Static file serving (production)
-        │
-        ▼
-MongoDB Atlas (Persistent Cloud Database)
-   ├── users          (unique email index)
-   ├── userSettings   (unique user_id index)
-   └── alerts         (created_at descending index)
+```text
+React + TypeScript frontend (Vite)
+             |
+             | HTTP / JSON
+             v
+Express API (backend/server.js)
+   ├── Authentication endpoints
+   ├── User settings endpoints
+   ├── Community alerts endpoints
+   ├── Optional Gemini assistant
+   └── Static frontend hosting in production
+             |
+             v
+MongoDB
 ```
 
-## API Endpoints
+## Local development
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/api/health` | No | Server and database health check |
-| `POST` | `/api/auth/register` | No | Create new user account |
-| `POST` | `/api/auth/login` | No | Login and receive JWT |
-| `GET` | `/api/auth/me` | JWT | Get current authenticated user |
-| `GET` | `/api/settings` | JWT | Get user's dashboard settings |
-| `POST` | `/api/settings` | JWT | Update user's dashboard settings |
-| `GET` | `/api/alerts` | JWT | Get latest 50 community alerts |
-| `POST` | `/api/alerts` | JWT | Post a new community alert |
+### Requirements
 
-## Local Development Setup
-
-### Prerequisites
-
-- Node.js 18+ (LTS recommended)
+- Node.js version supported by the installed Vite release
 - npm
-- A free MongoDB Atlas account ([sign up here](https://www.mongodb.com/cloud/atlas/register))
+- A MongoDB database (local or MongoDB Atlas)
 
-### 1. Clone the Repository
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/ambatitharunsai-tech/safe-water-web.git
 cd safe-water-web
-```
-
-### 2. Install Dependencies
-
-```bash
-# Install frontend dependencies
 npm install
-
-# Install backend dependencies
 cd backend
 npm install
 cd ..
 ```
 
-### 3. Configure Environment Variables
+### 2. Configure the backend
+
+Create the environment file:
 
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-Edit `backend/.env` with your MongoDB Atlas connection string:
+Configure the values in `backend/.env`:
 
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/<database>?retryWrites=true&w=majority
 MONGODB_DB=safe-water-web
-JWT_SECRET=your-secret-key-here
+JWT_SECRET=replace-with-a-long-random-secret
 PORT=3001
+FRONTEND_URL=http://localhost:5173
+NODE_ENV=development
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
-### 4. MongoDB Atlas Setup
+- `MONGODB_URI` connects the service to MongoDB.
+- `MONGODB_DB` selects the database (defaults to `safe-water-web` in the example).
+- `JWT_SECRET` signs authentication tokens. Set a long, unique value.
+- `PORT` controls the backend port.
+- `FRONTEND_URL` configures the allowed production frontend origin.
+- `GEMINI_API_KEY` is optional and enables the Gemini chat integration.
 
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) and create a free account
-2. Create a **Free Cluster (M0)**
-3. Under **Security Quickstart**, create a database username and password
-4. Under **Network Access**, click **Allow Access from Anywhere** (`0.0.0.0/0`)
-5. Click **Connect** → **Drivers** → **Node.js** and copy the connection string
-6. Paste the connection string into `backend/.env` as `MONGODB_URI`
+Never commit `backend/.env` or real credentials.
 
-### 5. Start Development Servers
+### 3. Start development servers
+
+Terminal 1 – backend:
 
 ```bash
-# Terminal 1: Start backend
-cd backend && node server.js
-
-# Terminal 2: Start frontend
+cd backend
 npm run dev
 ```
 
-Visit `http://localhost:5173` to view the application.
-
-## Production Deployment (Render)
-
-### Build Command
+Terminal 2 – frontend:
 
 ```bash
-npm run render-build
+npm run dev
 ```
 
-### Start Command
+Open the Vite URL shown in the terminal (normally http://localhost:5173).
 
-```bash
-npm run start
-```
+## API overview
 
-### Required Environment Variables on Render
+The backend provides the following main API groups:
 
-| Variable | Description |
-|----------|-------------|
-| `MONGODB_URI` | MongoDB Atlas connection string |
-| `MONGODB_DB` | Database name (default: `safe-water-web`) |
-| `JWT_SECRET` | Secret key for JWT signing (use a strong random string) |
-| `NODE_ENV` | Set to `production` |
-| `FRONTEND_URL` | Your Render app URL (for CORS) |
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | API/database health |
+| `POST` | `/api/auth/register` | Register an account |
+| `POST` | `/api/auth/login` | Authenticate and issue a JWT |
+| `GET` | `/api/auth/me` | Read the authenticated user |
+| `GET`, `POST` | `/api/settings` | Read or update user settings |
+| `GET`, `POST` | `/api/alerts` | Read or create community alerts |
+| `POST` | `/api/ai/chat` | Send a message to the optional AI assistant |
 
-## Security
+Protected endpoints require an `Authorization: Bearer <token>` header. See `backend/server.js` for request validation and response details.
 
-- Passwords are hashed with **bcryptjs** (10 salt rounds)
-- Authentication uses **JWT** with 7-day expiry
-- Email addresses are normalized (trimmed + lowercased)
-- Input validation on all endpoints (name length, email format, password length)
-- Duplicate email registration returns **409 Conflict**
-- Password field is **never** returned to the frontend
-- CORS is restricted in production via `FRONTEND_URL`
-- No credentials are hardcoded or committed to the repository
-- `.env` files are gitignored; only `.env.example` is tracked
+## Render deployment
 
-## Development Commands
+The root `package.json` includes deployment scripts:
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server with hot reload |
-| `npm run build` | TypeScript check + production build |
-| `npm run lint` | Run oxlint |
-| `npm run preview` | Preview production build locally |
-| `npm run render-build` | Full build for Render deployment |
-| `npm run start` | Start production backend server |
+- **Build:** `npm run render-build`
+- **Start:** `npm run start`
 
-## Future Improvements
+The build script builds the frontend and installs production backend dependencies. The backend serves the generated `dist/` directory in production.
 
-- Real-time WebSocket alerts (replace polling)
-- Admin moderation panel for community alerts
-- PDF export of health reports and cost analysis
-- Push notifications for critical water alerts
-- Leaderboard and gamification ranking system
-- Multi-language support (Telugu, Hindi)
-- Progressive Web App (PWA) support
+Configure `MONGODB_URI`, `MONGODB_DB`, `JWT_SECRET`, `NODE_ENV=production`, and (when using a separate frontend origin) `FRONTEND_URL` in the Render service environment. Add `GEMINI_API_KEY` only when enabling the Gemini integration.
+
+## Security notes
+
+- Use a strong, unique `JWT_SECRET` in production; the development fallback is not suitable for deployment.
+- Keep database credentials and AI keys in Render's secret environment settings.
+- Restrict MongoDB network access to trusted sources where practical.
+- Configure `FRONTEND_URL` to the expected production origin.
+- Do not treat an AI-generated response as medical advice or a substitute for local water-quality testing and public-health guidance.
+
+## License
+
+See the repository's license file, if present, for reuse terms.
